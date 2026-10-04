@@ -3,6 +3,8 @@ import { SUPABASE_URL, SUPABASE_KEY, TIMEZONE, DEFAULT_GAME } from './config.js'
 /* ------------------------------------------------------------------ basics */
 
 const $app = document.getElementById('app');
+// Works at the domain root or in a subfolder (GitHub Pages serves this at /footy/).
+const BASE = location.pathname.replace(/[^/]*$/, '');
 const $toast = document.getElementById('toast');
 
 const memory = {};
@@ -201,8 +203,8 @@ function paint(html) {
 
 function topBar(back) {
   const org = S.isOrg
-    ? `<a class="chip chip-org" href="/?organizer" data-nav>Organizer</a>`
-    : `<a class="chip" href="/?organizer&next=${encodeURIComponent(location.search)}" data-nav>Organizer</a>`;
+    ? `<a class="chip chip-org" href="${BASE}?organizer" data-nav>Organizer</a>`
+    : `<a class="chip" href="${BASE}?organizer&next=${encodeURIComponent(location.search)}" data-nav>Organizer</a>`;
   return `<header class="top">
     ${back ? `<a class="back" href="${back.href}" data-nav>${esc(back.label)}</a>` : `<span class="wordmark-sm">Footy</span>`}
     ${org}
@@ -210,7 +212,7 @@ function topBar(back) {
 }
 
 function errorView(msg) {
-  return `${topBar({ href: '/', label: 'All games' })}
+  return `${topBar({ href: BASE, label: 'All games' })}
   <section class="block empty">
     <h1 class="h-section">That didn't load</h1>
     <p>${esc(msg)}</p>
@@ -248,10 +250,10 @@ async function load() {
     } else if (r.name === 'organizer') {
       paint(viewOrganizer(r));
     } else if (r.name === 'form') {
-      if (!S.isOrg) return navigate(`/?organizer&next=${encodeURIComponent(location.search)}`, true);
+      if (!S.isOrg) return navigate(`${BASE}?organizer&next=${encodeURIComponent(location.search)}`, true);
       paint(await viewForm(r));
     } else if (r.name === 'teams') {
-      if (!S.isOrg) return navigate(`/?organizer&next=${encodeURIComponent(location.search)}`, true);
+      if (!S.isOrg) return navigate(`${BASE}?organizer&next=${encodeURIComponent(location.search)}`, true);
       await fetchMatch(r.slug);
       const ratings = await rpc('footy_get_ratings', { p_pin: S.pin });
       initTeamBuilder(ratings);
@@ -301,7 +303,7 @@ function viewHome() {
       isPast ? '' :
       left > 0 ? `<span class="fx-sub">${plural(left, 'spot')} left</span>` :
       `<span class="fx-sub">Full${m.waitlist ? `, ${m.waitlist} waiting` : ''}</span>`;
-    return `<li><a class="fx ${isPast ? 'fx-past' : ''}" href="/?m=${encodeURIComponent(m.slug)}" data-nav>
+    return `<li><a class="fx ${isPast ? 'fx-past' : ''}" href="${BASE}?m=${encodeURIComponent(m.slug)}" data-nav>
       <span class="fx-cal"><span class="fx-day">${F.day.format(d)}</span><span class="fx-mon">${F.mon.format(d)}</span></span>
       <span class="fx-body">
         <span class="fx-when">${esc(isPast ? F.dow.format(d) : dayWord(m.starts_at))} ${timeRange(m.starts_at, m.ends_at)}</span>
@@ -321,7 +323,7 @@ function viewHome() {
     <h2 class="h-section">Next games</h2>
     ${upcoming.length ? `<ul class="fx-list">${upcoming.map((m) => row(m, false)).join('')}</ul>`
       : `<div class="empty"><p>No games scheduled yet.</p>${S.isOrg ? '' : '<p class="muted">Whoever books the field schedules the game here, then shares the link in the chat.</p>'}</div>`}
-    ${S.isOrg ? `<a class="btn btn-bib btn-wide" href="/?new" data-nav>Schedule a game</a>` : ''}
+    ${S.isOrg ? `<a class="btn btn-bib btn-wide" href="${BASE}?new" data-nav>Schedule a game</a>` : ''}
   </section>
   ${past.length ? `<section class="block">
     <h2 class="h-section h-quiet">Played</h2>
@@ -333,11 +335,11 @@ function viewHome() {
 
 function viewMatch() {
   if (!S.data) {
-    return `${topBar({ href: '/', label: 'All games' })}
+    return `${topBar({ href: BASE, label: 'All games' })}
     <section class="block empty">
       <h1 class="h-section">Game not found</h1>
       <p>It may have been deleted. Check the chat for the latest link.</p>
-      <a class="btn btn-line" href="/" data-nav>See all games</a>
+      <a class="btn btn-line" href="${BASE}" data-nav>See all games</a>
     </section>`;
   }
   const { match: m, signups } = S.data;
@@ -373,7 +375,7 @@ function viewMatch() {
     ${m.notes ? `<p class="notes">${esc(m.notes)}</p>` : ''}
   </section>`;
 
-  return `${topBar({ href: '/', label: 'All games' })}
+  return `${topBar({ href: BASE, label: 'All games' })}
     ${head}
     ${viewYou(m, me, signups, { open, over, left, ins })}
     ${viewSquad(m, ins, wait, { open, overdue, me, paidIn, started })}
@@ -538,8 +540,8 @@ function viewOrgTools(m, ins, wait, { overdue, over }) {
     <h2 class="h-section">Organizer</h2>
     ${priced && ins.length ? `<p>${unpaid.length ? `Still unpaid: ${unpaid.map((s) => esc(s.name)).join(', ')}.` : 'Everyone in the squad has paid.'}</p>` : ''}
     <div class="org-grid">
-      <a class="btn btn-line" href="/?teams=${encodeURIComponent(m.slug)}" data-nav>${m.teams ? 'Redo teams' : 'Make teams'}</a>
-      <a class="btn btn-line" href="/?edit=${encodeURIComponent(m.slug)}" data-nav>Edit game</a>
+      <a class="btn btn-line" href="${BASE}?teams=${encodeURIComponent(m.slug)}" data-nav>${m.teams ? 'Redo teams' : 'Make teams'}</a>
+      <a class="btn btn-line" href="${BASE}?edit=${encodeURIComponent(m.slug)}" data-nav>Edit game</a>
       <button class="btn btn-line" data-action="toggle" data-key="bulk">Paste names from chat</button>
       ${priced && unpaid.length && wait.length ? `<button class="btn btn-line" data-action="bump">Move unpaid to waitlist</button>` : ''}
       ${!over && m.status !== 'cancelled' ? (m.status === 'open'
@@ -548,7 +550,7 @@ function viewOrgTools(m, ins, wait, { overdue, over }) {
       ${m.status === 'cancelled'
         ? `<button class="btn btn-line" data-action="status" data-status="open">Restore game</button>`
         : !over ? `<button class="btn btn-line" data-action="status" data-status="cancelled">Cancel game</button>` : ''}
-      <a class="btn btn-line" href="/?new&from=${encodeURIComponent(m.slug)}" data-nav>Schedule next week</a>
+      <a class="btn btn-line" href="${BASE}?new&from=${encodeURIComponent(m.slug)}" data-nav>Schedule next week</a>
       <button class="btn btn-line btn-danger" data-action="delete-match">${confirmDelete ? 'Tap again to delete' : 'Delete game'}</button>
     </div>
     ${priced && unpaid.length && wait.length ? `<p class="muted">Moving unpaid players puts them behind the waitlist, so the people waiting get their spots.</p>` : ''}
@@ -564,9 +566,9 @@ function viewOrgTools(m, ins, wait, { overdue, over }) {
 /* -------------------------------------------------------------- organizer */
 
 function viewOrganizer(r) {
-  const next = r.next && r.next.startsWith('?') ? '/' + r.next : '/';
+  const next = r.next && r.next.startsWith('?') ? BASE + r.next : BASE;
   if (!S.status?.has_pin) {
-    return `${topBar({ href: '/', label: 'All games' })}
+    return `${topBar({ href: BASE, label: 'All games' })}
     <section class="block narrow">
       <h1 class="h-page">Set an organizer PIN</h1>
       <p>Anyone with this PIN can schedule games, fix the list and make teams. Share it only with the people who book the field.</p>
@@ -580,12 +582,12 @@ function viewOrganizer(r) {
     </section>`;
   }
   if (S.isOrg) {
-    return `${topBar({ href: '/', label: 'All games' })}
+    return `${topBar({ href: BASE, label: 'All games' })}
     <section class="block narrow">
       <h1 class="h-page">Organizer mode is on</h1>
       <p>This device can schedule games, fix the list and make teams.</p>
       <div class="stack">
-        <a class="btn btn-bib" href="/?new" data-nav>Schedule a game</a>
+        <a class="btn btn-bib" href="${BASE}?new" data-nav>Schedule a game</a>
         <button class="btn btn-line" data-action="logout">Turn off organizer mode</button>
       </div>
       <button class="link" data-action="toggle" data-key="changepin">Change the PIN</button>
@@ -598,7 +600,7 @@ function viewOrganizer(r) {
       </form>` : ''}
     </section>`;
   }
-  return `${topBar({ href: '/', label: 'All games' })}
+  return `${topBar({ href: BASE, label: 'All games' })}
   <section class="block narrow">
     <h1 class="h-page">Organizer PIN</h1>
     <p>Enter the PIN to schedule games, fix the list and make teams.</p>
@@ -689,7 +691,7 @@ async function viewForm(r) {
   const si = zonedInputs(start.toISOString()), ei = zonedInputs(end.toISOString());
   const opts = PAY_BY_OPTIONS.some((o) => o.h === payH) ? PAY_BY_OPTIONS : [...PAY_BY_OPTIONS, { h: payH, label: `${payH} hours before` }];
 
-  const back = editing ? { href: `/?m=${encodeURIComponent(src.slug)}`, label: 'Back to game' } : { href: '/', label: 'All games' };
+  const back = editing ? { href: `${BASE}?m=${encodeURIComponent(src.slug)}`, label: 'Back to game' } : { href: BASE, label: 'All games' };
   return `${topBar(back)}
   <section class="block narrow">
     <h1 class="h-page">${editing ? 'Edit game' : 'Schedule a game'}</h1>
@@ -813,7 +815,7 @@ function viewTeams() {
   const ins = signups.filter((s) => s.in);
   const byId = new Map(ins.map((s) => [s.id, s]));
   const tb = S.tb;
-  const back = { href: `/?m=${encodeURIComponent(m.slug)}`, label: 'Back to game' };
+  const back = { href: `${BASE}?m=${encodeURIComponent(m.slug)}`, label: 'Back to game' };
   if (ins.length < 2) {
     return `${topBar(back)}<section class="block narrow empty"><h1 class="h-page">Make teams</h1><p>Teams can be made once at least 2 players are in.</p></section>`;
   }
@@ -871,7 +873,7 @@ function viewTeams() {
 
 /* ---------------------------------------------------------- share helpers */
 
-function gameURL(m) { return `${location.origin}/?m=${encodeURIComponent(m.slug)}`; }
+function gameURL(m) { return `${location.origin}${BASE}?m=${encodeURIComponent(m.slug)}`; }
 
 function whatsappText() {
   const { match: m, signups } = S.data;
@@ -1056,14 +1058,14 @@ $app.addEventListener('click', async (e) => {
     return withBusy(el, async () => {
       await rpc('footy_delete_match', { p_pin: S.pin, p_match_id: m.id });
       toast('Game deleted');
-      navigate('/', true);
+      navigate(BASE, true);
     });
   }
 
   if (a === 'logout') {
     store.set('pin', null); S.pin = null; S.isOrg = false;
     toast('Organizer mode is off on this device');
-    navigate('/', true);
+    navigate(BASE, true);
     return;
   }
 
@@ -1105,14 +1107,14 @@ $app.addEventListener('click', async (e) => {
     return withBusy(el, async () => {
       await rpc('footy_save_teams', { p_pin: S.pin, p_match_id: m.id, p_teams: teams });
       toast('Teams published');
-      navigate(`/?m=${encodeURIComponent(m.slug)}`);
+      navigate(`${BASE}?m=${encodeURIComponent(m.slug)}`);
     });
   }
   if (a === 'unpublish') {
     return withBusy(el, async () => {
       await rpc('footy_save_teams', { p_pin: S.pin, p_match_id: m.id, p_teams: null });
       toast('Teams taken down');
-      navigate(`/?m=${encodeURIComponent(m.slug)}`);
+      navigate(`${BASE}?m=${encodeURIComponent(m.slug)}`);
     });
   }
 });
@@ -1173,7 +1175,7 @@ $app.addEventListener('submit', async (e) => {
       await rpc('footy_set_pin', { p_new_pin: f.pin });
       store.set('pin', f.pin); S.pin = f.pin; S.isOrg = true; S.status.has_pin = true;
       toast('PIN set. Organizer mode is on.');
-      navigate(form.dataset.next || '/', true);
+      navigate(form.dataset.next || BASE, true);
     });
   }
   if (kind === 'login') {
@@ -1182,7 +1184,7 @@ $app.addEventListener('submit', async (e) => {
       if (!ok) throw new Error('That PIN is wrong');
       store.set('pin', f.pin); S.pin = f.pin; S.isOrg = true;
       toast('Organizer mode is on');
-      navigate(form.dataset.next || '/', true);
+      navigate(form.dataset.next || BASE, true);
     });
   }
   if (kind === 'changepin') {
@@ -1208,7 +1210,7 @@ $app.addEventListener('submit', async (e) => {
       };
       const newSlug = await rpc('footy_save_match', { p_pin: S.pin, p: payload });
       toast(f.id ? 'Changes saved' : 'Game scheduled. Share the link in the chat.');
-      navigate(`/?m=${encodeURIComponent(newSlug)}`, true);
+      navigate(`${BASE}?m=${encodeURIComponent(newSlug)}`, true);
     });
   }
 });
