@@ -206,7 +206,7 @@ function topBar(back) {
     ? `<a class="chip chip-org" href="${BASE}?organizer" data-nav>Organizer</a>`
     : `<a class="chip" href="${BASE}?organizer&next=${encodeURIComponent(location.search)}" data-nav>Organizer</a>`;
   return `<header class="top">
-    ${back ? `<a class="back" href="${back.href}" data-nav>${esc(back.label)}</a>` : `<span class="wordmark-sm">Footy</span>`}
+    ${back ? `<a class="back" href="${back.href}" data-nav>${esc(back.label)}</a>` : `<span></span>`}
     ${org}
   </header>`;
 }

@@ -124,7 +124,7 @@ strong { font-weight: 600; }
 .hero-home { padding: 20px 0 28px; }
 .wordmark {
   font: 800 clamp(5rem, 28vw, 9rem)/0.82 var(--f-display);
-  margin: 0 0 18px;
+  margin: 0 0 0.32em;
   letter-spacing: -0.01em;
 }
 .lede { font-size: 1.125rem; color: var(--chalk-2); max-width: 30ch; }
@@ -503,7 +503,8 @@ label { display: block; font-weight: 500; font-size: 0.9375rem; margin: 14px 0 6
   position: fixed;
   left: 50%;
   bottom: calc(18px + env(safe-area-inset-bottom));
-  transform: translate(-50%, 140%);
+  transform: translate(-50%, calc(100% + 48px));
+  visibility: hidden;
   width: min(528px, calc(100% - 32px));
   padding: 13px 16px;
   border-radius: var(--radius);
@@ -511,10 +512,10 @@ label { display: block; font-weight: 500; font-size: 0.9375rem; margin: 14px 0 6
   color: var(--ink);
   font-weight: 500;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  transition: transform 0.22s ease;
+  transition: transform 0.22s ease, visibility 0s linear 0.22s;
   z-index: 10;
 }
-.toast.show { transform: translate(-50%, 0); }
+.toast.show { transform: translate(-50%, 0); visibility: visible; transition: transform 0.22s ease; }
 .toast[data-kind="error"] { background: var(--danger); }
 
 @media (prefers-reduced-motion: reduce) {
